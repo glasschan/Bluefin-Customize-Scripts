@@ -4,11 +4,31 @@
 
 ---
 
+## setup-fonts.sh
+
+安裝 CJK 字體 (MiSans + OPPO Sans) + 可選 GTK 介面字體。
+
+```bash
+./setup-fonts.sh         # 安裝 (預設)
+./setup-fonts.sh -s      # 顯示狀態
+./setup-fonts.sh -u      # 還原
+```
+
+## setup-rime-ibus.sh
+
+安裝 ibus-rime + 快速倉頡 (scj6) 輸入法。
+
+```bash
+./setup-rime-ibus.sh     # 安裝 (預設)
+./setup-rime-ibus.sh -s  # 顯示狀態
+./setup-rime-ibus.sh -u  # 還原
+```
+
+**注意:** 需先 `sudo rpm-ostree install ibus-rime` 並 reboot，再執行此腳本。
+
 ## gnome-workspace-keybindings.sh
 
 將 GNOME 的 `Super+數字` 快捷鍵從 Dock 應用切換改為 Workspace 管理，類似 i3/Sway 的體驗。
-
-### 快捷鍵對照表
 
 | 快捷鍵 | 功能 |
 |--------|------|
@@ -17,69 +37,66 @@
 | `Super+Shift+1` ~ `Super+Shift+9` | 將當前窗口移動到 Workspace 1-9 |
 | `Super+Shift+0` | 將當前窗口移動到 Workspace 10 |
 
-### 使用方式
-
 ```bash
-# 設定快捷鍵（預設動作）
-./gnome-workspace-keybindings.sh
-./gnome-workspace-keybindings.sh --setup
-
-# 查看當前狀態
-./gnome-workspace-keybindings.sh --check
-
-# 修復 dash-to-dock 衝突
-./gnome-workspace-keybindings.sh --fix-dock
-
-# 恢復 GNOME 預設
-./gnome-workspace-keybindings.sh --restore
+./gnome-workspace-keybindings.sh         # 設定 (預設)
+./gnome-workspace-keybindings.sh --check # 查看狀態
+./gnome-workspace-keybindings.sh --restore  # 恢復 GNOME 預設
 ```
 
-### 注意事項
-
-- 如果啟用了 dash-to-dock 的 hot-keys，會與本腳本衝突。`--setup` 會自動處理此問題。
-- 適用於 GNOME 46.x / Bluefin。
-- 若要恢復預設，使用 `--restore` 即可。
-
----
+**注意:** dash-to-dock hot-keys 會與本腳本衝突，`--setup` 會自動處理。
 
 ## alacritty-zellij-shortcut.sh
 
-一鍵安裝 Alacritty 終端機 + Zellij（終端多工器），並綁定 `Super+Alt+Enter` 快捷鍵啟動最大化視窗。
-
-### 快捷鍵對照表
+一鍵安裝 Alacritty + Zellij，綁定 `Super+Alt+Enter` 啟動最大化終端機。
 
 | 快捷鍵 | 功能 |
 |--------|------|
 | `Super+Alt+Enter` | 啟動 Alacritty（最大化）並執行 Zellij |
 
-### 使用方式
-
 ```bash
-# 一鍵安裝（預設動作）
-./alacritty-zellij-shortcut.sh
-./alacritty-zellij-shortcut.sh --setup
-
-# 查看當前狀態
-./alacritty-zellij-shortcut.sh --check
-
-# 恢復預設（還原 Ptyxis Alt 快捷鍵、刪除檔案）
-./alacritty-zellij-shortcut.sh --restore
+./alacritty-zellij-shortcut.sh           # 安裝 (預設)
+./alacritty-zellij-shortcut.sh --restore # 還原
 ```
 
-### 安裝流程
+## setup-super-enter-ptyxis.sh
 
-1. 檢查 alacritty → 未安裝則透過 `rpm-ostree install` 安裝（需重啟）
-2. 檢查 zellij → 未安裝則詢問是否透過 `brew install` 安裝
-3. 建立 `~/bin/zlaunch` 包裝腳本
-4. 寫入 `~/.config/alacritty/alacritty.toml`（已存在會詢問是否覆蓋）
-5. 設定 GNOME 快捷鍵（優先替換 `Ptyxis Alt`，否則新增自訂綁定）
+將 `Super+Enter` 綁定到 Ptyxis 終端機。
 
-### 還原說明
+| 快捷鍵 | 功能 |
+|--------|------|
+| `Super+Enter` | 啟動 Ptyxis 終端機 |
 
-- `--restore` 會將快捷鍵還原為原始的 Ptyxis Alt（`Ctrl+Alt+Enter`）
-- 刪除 `~/bin/zlaunch` 和 `~/.config/alacritty/alacritty.toml`
-- 不會卸載 alacritty 或 zellij
+```bash
+./setup-super-enter-ptyxis.sh           # 設定 (預設)
+./setup-super-enter-ptyxis.sh --restore # 移除綁定
+./setup-super-enter-ptyxis.sh --check   # 查看狀態
+```
+
+## setup-keyd-swap.sh
+
+交換 Laptop 內建鍵盤的 Alt 和 Super 鍵 (外接鍵盤不受影響)。
+
+| 按鍵 | 效果 |
+|------|------|
+| Alt | 變成 Super |
+| Super | 變成 Alt |
+
+```bash
+./setup-keyd-swap.sh           # 編譯 + 安裝 keyd + 啟用 (預設)
+./setup-keyd-swap.sh --restore # 停用 keyd + 還原
+./setup-keyd-swap.sh --check   # 查看狀態
+```
+
+**注意:** 需要 gcc + make (Bluefin-DX 已預裝)。首次安裝會下載 keyd 原始碼編譯。
 
 ---
 
-*適用 GNOME 版本: 46.x*
+## 還原所有設定
+
+每個 script 都有 `--restore` 或 `-u` 參數。全部還原：
+
+```bash
+for s in *.sh; do ./$s --restore; done   # 還原全部
+```
+
+*適用 GNOME 版本: 46.x / Bluefin 44*
