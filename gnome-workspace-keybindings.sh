@@ -28,7 +28,7 @@ do_setup() {
     for i in {1..9}; do
         gsettings set org.gnome.desktop.wm.keybindings "switch-to-workspace-$i" "['<Super>$i']"
     done
-    gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-10 "['<Super>0']"
+    gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-10 "['<Super>0', '<Super>KP_0']"
     info "Workspace switch keybindings set."
 
     info "Setting Super+Shift+1~9 → Move to Workspace 1-9, Super+Shift+0 → Move to Workspace 10..."
@@ -77,12 +77,12 @@ do_check() {
 
     echo ""
     echo "=== Dash-to-Dock ==="
-    hot_keys=$(dconf dump /org/gnome/shell/extensions/dash-to-dock/ 2>/dev/null | grep "hot-keys" || true)
-    if [[ -n "$hot_keys" ]]; then
-        echo "  $hot_keys"
-    else
-        echo "  hot-keys: not configured (no conflict)"
-    fi
+    local dock_hk
+    dock_hk=$(dconf read /org/gnome/shell/extensions/dash-to-dock/hot-keys 2>/dev/null || echo "not configured")
+    local dock_ack
+    dock_ack=$(dconf read /org/gnome/shell/extensions/dash-to-dock/app-ctrl-hot-keys 2>/dev/null || echo "not configured")
+    echo "  hot-keys: $dock_hk"
+    echo "  app-ctrl-hot-keys: $dock_ack"
 
     echo ""
     echo "=== Dock App Switching (should be empty) ==="
@@ -93,15 +93,26 @@ do_check() {
 }
 
 do_fix_dock() {
+    # GNOME 45+ Dash to Dock stores hot-keys in dconf, not gsettings
     local hot_keys
-    hot_keys=$(gsettings get org.gnome.shell.extensions.dash-to-dock hot-keys 2>/dev/null || echo "not available")
+    hot_keys=$(dconf read /org/gnome/shell/extensions/dash-to-dock/hot-keys 2>/dev/null || echo "not available")
 
     if [[ "$hot_keys" == "true" ]]; then
         warn "dash-to-dock hot-keys is enabled — disabling to prevent conflicts..."
-        gsettings set org.gnome.shell.extensions.dash-to-dock hot-keys false
+        dconf write /org/gnome/shell/extensions/dash-to-dock/hot-keys false
         info "dash-to-dock hot-keys disabled."
     else
         info "dash-to-dock hot-keys is already disabled (no conflict)."
+    fi
+
+    local app_ctrl
+    app_ctrl=$(dconf read /org/gnome/shell/extensions/dash-to-dock/app-ctrl-hot-keys 2>/dev/null || echo "not available")
+    if [[ "$app_ctrl" == "true" ]]; then
+        warn "dash-to-dock app-ctrl-hot-keys is enabled — disabling to prevent Super+0 conflict..."
+        dconf write /org/gnome/shell/extensions/dash-to-dock/app-ctrl-hot-keys false
+        info "dash-to-dock app-ctrl-hot-keys disabled."
+    else
+        info "dash-to-dock app-ctrl-hot-keys is already disabled (no conflict)."
     fi
 }
 

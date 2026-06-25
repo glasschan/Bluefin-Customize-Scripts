@@ -186,7 +186,7 @@ add_custom_to_list() {
     if [[ "$paths" == "[]" || "$paths" == "@as []" ]]; then
         new_paths="['${new_path}']"
     else
-        new_paths=$(echo "$paths" | sed "s/]$/, '${new_path}']/")
+        new_paths=$(echo "$paths" | sed "s|]$|, '${new_path}']|")
     fi
 
     gsettings set "$GSETTINGS_LIST_KEY" "$GSETTINGS_LIST_PROP" "$new_paths"
