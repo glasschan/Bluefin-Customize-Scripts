@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # setup-fonts.sh
-# 安裝 CJK 字體 (MiSans + OPPO Sans) + 可選 GTK 介面字體
+# 安裝 CJK 字體 (MiSans + OPPO Sans) + Droid Sans Mono (等寬) + 可選 GTK 介面字體
 # Bluefin (GNOME/Wayland) 版本 — 移植自 omarchy-custom-scripts/setup-fonts.sh
 # Category: 系統設定
-# Description: 安裝 CJK 字體 (MiSans + OPPO Sans) + GTK 字體
+# Description: 安裝 CJK 字體 (MiSans + OPPO Sans) + Droid Sans Mono + GTK 字體
 
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -19,6 +19,8 @@ FONT_SIZE=10
 # 字體下載連結
 MISANS_URL="https://hyperos.mi.com/font-download/MiSans.zip"
 OPPOSANS_URL="https://openfs.oppomobile.com/open/oop/202412/05/0f155015fff7700fbbcef7fa2aad78dc.zip"
+# Droid Sans Mono 已從 Google Fonts 目錄下架 (deprecated)，但仍可透過 CSS API 取得 gstatic 直鏈
+DROIDSANSMONO_URL="https://fonts.gstatic.com/s/droidsansmono/v21/6NUO8FuJNQ2MbkrZ5-J8lKFrp7phfg.ttf"
 
 # 檢查字體是否已安裝
 check_font_installed() {
@@ -95,6 +97,22 @@ download_opposans() {
     info "OPPO Sans 安裝完成"
 }
 
+# 下載並安裝 Droid Sans Mono（等寬字體，直接 TTF，無需解壓）
+download_droidsansmono() {
+    info "下載 Droid Sans Mono 字體..."
+    mkdir -p "$FONT_DIR"
+
+    # gstatic 直鏈需要瀏覽器 UA 才會穩定回應 200
+    if ! curl -fL --retry 5 --retry-delay 2 --retry-all-errors \
+             -A "Mozilla/5.0" \
+             -o "$FONT_DIR/DroidSansMono.ttf" "$DROIDSANSMONO_URL"; then
+        error "下載 Droid Sans Mono 失敗（已重試 5 次）"
+    fi
+
+    detail "已安裝: $FONT_DIR/DroidSansMono.ttf"
+    info "Droid Sans Mono 安裝完成"
+}
+
 # 更新字體快取
 update_font_cache() {
     info "更新字體快取..."
@@ -120,6 +138,13 @@ install_fonts() {
         need_update=true
     else
         info "OPPO Sans 已安裝，跳過"
+    fi
+
+    if ! check_font_installed "Droid Sans Mono"; then
+        download_droidsansmono
+        need_update=true
+    else
+        info "Droid Sans Mono 已安裝，跳過"
     fi
 
     if $need_update; then
@@ -166,6 +191,7 @@ remove_fonts() {
     info "移除字體檔案..."
     rm -f "$FONT_DIR/MiSansVF.ttf" "$FONT_DIR/MiSans-VF.ttf"
     rm -f "$FONT_DIR/OPPO Sans 4.0.ttf" "$FONT_DIR/OPPOSans40.ttf"
+    rm -f "$FONT_DIR/DroidSansMono.ttf"
     fc-cache -f >/dev/null 2>&1
 
     info "字體已移除（如需移除其他自行放入的字體請手動處理）"
@@ -185,6 +211,12 @@ show_status() {
         echo -e "  ${GREEN}✓${NC} OPPO Sans 字體已安裝"
     else
         echo -e "  ${RED}✗${NC} OPPO Sans 字體未安裝"
+    fi
+
+    if check_font_installed "Droid Sans Mono"; then
+        echo -e "  ${GREEN}✓${NC} Droid Sans Mono 字體已安裝"
+    else
+        echo -e "  ${RED}✗${NC} Droid Sans Mono 字體未安裝"
     fi
 
     local current_font
